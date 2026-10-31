@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeDrop | Blood Donor Finder</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#fffafa;color:#252525}
+header{background:#b91c32;color:white;padding:18px 6%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.logo{font-size:25px;font-weight:bold}
+nav a{color:white;text-decoration:none;margin:0 10px;font-weight:bold}
+.hero{text-align:center;padding:65px 20px;background:linear-gradient(135deg,#fff1f2,#ffe4e6)}
+.hero h1{font-size:42px;color:#991b1b;margin-bottom:15px}
+.hero p{font-size:18px;max-width:650px;margin:0 auto 25px;line-height:1.6}
+button{background:#be123c;color:white;border:0;padding:12px 20px;border-radius:8px;font-size:16px;cursor:pointer}
+button:hover{background:#881337}
+.container{max-width:1000px;margin:auto;padding:30px 18px}
+h2{text-align:center;color:#9f1239;margin-bottom:20px}
+.card{background:white;padding:22px;border-radius:14px;box-shadow:0 3px 15px #0001;margin-bottom:20px}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:7px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.stat{text-align:center;background:#fff1f2;padding:22px;border-radius:12px}
+.stat h3{font-size:30px;color:#be123c;margin-bottom:8px}
+.donor{border:1px solid #ffe4e6;padding:18px;border-radius:12px}
+.blood{font-size:28px;color:#be123c;font-weight:bold}
+.donor h3{margin:10px 0}
+.donor p{margin:6px 0;color:#555}
+.hidden{display:none}
+#message{text-align:center;margin:12px;font-weight:bold}
+footer{text-align:center;background:#881337;color:white;padding:22px;margin-top:25px}
+section{scroll-margin-top:20px}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">🩸 LifeDrop</div>
+<nav>
+<a href="#home">Home</a>
+<a href="#search">Find Donor</a>
+<a href="#register">Register</a>
+</nav>
+</header>
+
+<section class="hero" id="home">
+<h1>Donate Blood, Save Lives</h1>
+<p>Your one donation can make a difference. Find blood donors near you or register yourself to help someone in need.</p>
+<button onclick="document.getElementById('search').scrollIntoView({behavior:'smooth'})">Find a Donor ❤️</button>
+</section>
+
+<div class="container">
+
+<section class="grid">
+<div class="stat">
+<h3 id="total">0</h3>
+<p>Registered Donors</p>
+</div>
+<div class="stat">
+<h3>8</h3>
+<p>Blood Groups</p>
+</div>
+<div class="stat">
+<h3>24/7</h3>
+<p>Spreading Awareness</p>
+</div>
+</section>
+
+<section id="search" style="margin-top:40px">
+<h2>🔍 Find Blood Donors</h2>
+<div class="card">
+<select id="bloodFilter">
+<option value="">All Blood Groups</option>
+<option>A+</option><option>A-</option>
+<option>B+</option><option>B-</option>
+<option>O+</option><option>O-</option>
+<option>AB+</option><option>AB-</option>
+</select>
+<input id="cityFilter" placeholder="Enter city (e.g. Nagpur)">
+<button onclick="searchDonors()">Search Donors</button>
+<button onclick="showDonors()" style="background:#64748b">Show All</button>
+</div>
+<div class="grid" id="donorResults"></div>
+<p id="searchMessage" style="text-align:center;margin:15px"></p>
+</section>
+
+<section id="register" style="margin-top:45px">
+<h2>📝 Become a Blood Donor</h2>
+<div class="card">
+<input id="name" placeholder="Full Name">
+<input id="age" type="number" placeholder="Age">
+<select id="blood">
+<option value="">Select Blood Group</option>
+<option>A+</option><option>A-</option>
+<option>B+</option><option>B-</option>
+<option>O+</option><option>O-</option>
+<option>AB+</option><option>AB-</option>
+</select>
+<input id="city" placeholder="City">
+<input id="phone" type="tel" placeholder="Contact Number">
+<button onclick="registerDonor()">Register as Donor</button>
+<p id="message"></p>
+</div>
+</section>
+
+<section id="request" style="margin-top:45px">
+<h2>🚨 Blood Request</h2>
+<div class="card">
+<input id="reqName" placeholder="Patient Name">
+<select id="reqBlood">
+<option value="">Required Blood Group</option>
+<option>A+</option><option>A-</option>
+<option>B+</option><option>B-</option>
+<option>O+</option><option>O-</option>
+<option>AB+</option><option>AB-</option>
+</select>
+<input id="hospital" placeholder="Hospital Name">
+<input id="reqCity" placeholder="City">
+<button onclick="sendRequest()">Submit Request</button>
+<p id="reqMessage"></p>
+</div>
+</section>
+
+</div>
+
+<footer>
+<p>🩸 LifeDrop – Every Drop Counts</p>
+<p style="margin-top:8px">A student web development project</p>
+</footer>
+
+<script>
+let donors=JSON.parse(localStorage.getItem("lifedropDonors")||"[]");
+
+function saveDonors(){
+ localStorage.setItem("lifedropDonors",JSON.stringify(donors));
+}
+
+function registerDonor(){
+
+ const name=document.getElementById("name").value.trim();
+ const age=Number(document.getElementById("age").value);
+ const blood=document.getElementById("blood").value;
+ const city=document.getElementById("city").value.trim();
+ const phone=document.getElementById("phone").value.trim();
+ const message=document.getElementById("message");
+
+ if(!name||!age||!blood||!city||!phone){
+  message.innerText="Please fill all fields.";
+  return;
+ }
+
+ if(age<18||age>65){
+  message.innerText="Demo eligibility: age must be 18–65. Actual eligibility requires medical screening.";
+  return;
+ }
+
+ if(!/^[0-9]{10}$/.test(phone)){
+  message.innerText="Enter a valid 10-digit phone number.";
+  return;
+ }
+
+ donors.push({name,age,blood,city,phone});
+
+ saveDonors();
+ updateStats();
+ showDonors();
+
+ message.innerText="✅ Registration successful!";
+
+ ["name","age","blood","city","phone"].forEach(id=>{
+  document.getElementById(id).value="";
+ });
+}
+
+function updateStats(){
+ document.getElementById("total").innerText=donors.length;
+}
+
+function showDonors(){
+ const result=document.getElementById("donorResults");
+ result.innerHTML="";
+
+ donors.forEach(d=>{
+  const card=document.createElement("div");
+  card.className="donor";
+
+  card.innerHTML=`
+   <div class="blood">${escapeHTML(d.blood)}</div>
+   <h3>${escapeHTML(d.name)}</h3>
+   <p>📍 ${escapeHTML(d.city)}</p>
+   <p>Age: ${escapeHTML(d.age)}</p>
+   <button onclick="contactDonor('${encodeURIComponent(d.phone)}')">Contact Donor</button>
+  `;
+
+  result.appendChild(card);
+ });
+
+ document.getElementById("searchMessage").innerText=
+ donors.length ? donors.length+" donor(s) available in demo." : "No donors registered yet.";
+}
+
+function searchDonors(){
+
+ const blood=document.getElementById("bloodFilter").value;
+ const city=document.getElementById("cityFilter").value.trim().toLowerCase();
+
+ const filtered=donors.filter(d=>
+  (!blood||d.blood===blood) &&
+  (!city||d.city.toLowerCase().includes(city))
+ );
+
+ const result=document.getElementById("donorResults");
+ result.innerHTML="";
+
+ filtered.forEach(d=>{
+  const card=document.createElement("div");
+  card.className="donor";
+
+  card.innerHTML=`
+   <div class="blood">${escapeHTML(d.blood)}</div>
+   <h3>${escapeHTML(d.name)}</h3>
+   <p>📍 ${escapeHTML(d.city)}</p>
+   <p>Age: ${escapeHTML(d.age)}</p>
+   <button onclick="contactDonor('${encodeURIComponent(d.phone)}')">Contact Donor</button>
+  `;
+
+  result.appendChild(card);
+ });
+
+ document.getElementById("searchMessage").innerText=
+ filtered.length ? filtered.length+" matching donor(s) found." : "No matching donors found.";
+}
+
+function contactDonor(phone){
+ const number=decodeURIComponent(phone);
+ window.location.href="tel:"+number;
+}
+
+function sendRequest(){
+
+ const name=document.getElementById("reqName").value.trim();
+ const blood=document.getElementById("reqBlood").value;
+ const hospital=document.getElementById("hospital").value.trim();
+ const city=document.getElementById("reqCity").value.trim();
+
+ const msg=document.getElementById("reqMessage");
+
+ if(!name||!blood||!hospital||!city){
+  msg.innerText="Please fill all request fields.";
+  return;
+ }
+
+ msg.innerText="✅ Demo request submitted! In a real system, this would notify registered donors.";
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,char=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ }[char]));
+}
+
+updateStats();
+showDonors();
+</script>
+
+</body>
+  </html>
+  
